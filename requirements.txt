@@ -1,0 +1,8 @@
+nextcord[voice]==2.6.0
+python-dotenv==1.0.0
+pydantic_settings==2.1.0
+setuptools
+feedparser==6.0.11
+sqlmodel==0.0.14
+alembic==1.13.1
+aiosqlite==0.19.0
