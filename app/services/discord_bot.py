@@ -31,29 +31,34 @@ class Bot(commands.Bot):
 
     async def rss_task(self):
         await self.wait_until_ready()
-        channel_ids = await get_all_channel_ids()
         while not self.is_closed():
-            for channel_id in channel_ids:
-                channel = await self.fetch_channel(channel_id)
-                if channel:
-                    feeds = await get_feeds_by_channel(channel_id)
-                    for _feed in feeds:
-                        feed = await parse_feed(_feed.url)
-                        if not feed.version:
-                            # here should delete feed or notify user
-                            logger.error(f"Invalid feed url: {_feed.url}")
-                            continue
-                        if feed.entries:
-                            entry = feed.entries[0]
-                            if entry.published_parsed:
-                                published = datetime.fromtimestamp(mktime(entry.published_parsed))
-                            else:
-                                published = datetime.utcnow()
-                            if (not _feed.last_checked) or published > _feed.last_checked:
-                                logger.info(f"New entry found in: {_feed.rss_url}, last_checked: {_feed.last_checked}")
-                                await channel.send(content=f":newspaper2: [{entry.title}]({entry.link})")
-                                res = await update_last_checked(_feed.id)
-                                logger.info(f"update last_checked: {res}")
+            try:
+                channel_ids = await get_all_channel_ids()
+                for channel_id in channel_ids:
+                    channel = await self.fetch_channel(channel_id)
+                    if channel:
+                        feeds = await get_feeds_by_channel(channel_id)
+                        for _feed in feeds:
+                            feed = await parse_feed(_feed.url)
+                            if not feed or not feed.version:
+                                # here should delete feed or notify user
+                                logger.error(f"Invalid feed url: {_feed.url}")
+                                continue
+                            if feed.entries:
+                                entry = feed.entries[0]
+                                if entry.published_parsed:
+                                    published = datetime.fromtimestamp(mktime(entry.published_parsed))
+                                else:
+                                    published = datetime.utcnow()
+                                if (not _feed.last_checked) or published > _feed.last_checked:
+                                    logger.info(
+                                        f"New entry found in: {_feed.rss_url}, last_checked: {_feed.last_checked}"
+                                    )
+                                    await channel.send(content=f":newspaper2: [{entry.title}]({entry.link})")
+                                    res = await update_last_checked(_feed.id)
+                                    logger.info(f"update last_checked: {res}")
+            except Exception as e:  # handle all exceptions here to avoid task hang
+                logger.error(f"feed task error: {e}")
             logger.info("feed task finished, sleep 5 min")
             await asyncio.sleep(60 * 5)  # 5m
 
