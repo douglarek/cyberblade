@@ -2,6 +2,7 @@ import asyncio
 import io
 import logging
 import re
+import traceback
 from datetime import datetime
 from time import mktime
 
@@ -56,6 +57,9 @@ class Bot(commands.Bot):
                                     res = await update_last_checked(_feed.id)
                                     logger.info(f"update last_checked: {res}")
             except Exception as e:  # handle all exceptions here to avoid task hang
+                info = await self.application_info()
+                channel = await self.create_dm(info.owner)
+                await channel.send(f"```feed task error: {traceback.format_exc()}```")
                 logger.error(f"feed task error: {e}", exc_info=True)
             logger.info("feed task finished, sleep 5 min")
             await asyncio.sleep(60 * 5)  # 5m

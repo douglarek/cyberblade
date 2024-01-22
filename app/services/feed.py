@@ -71,7 +71,9 @@ async def update_last_checked(feed_id: int) -> FeedResult:
         feed = result.one_or_none()
         if feed:
             feed.last_checked = datetime.utcnow()
+            session.add(feed)
             await session.commit()
+            await session.refresh(feed)
             return FeedResult(success=True, feed=feed)
         else:
             return FeedResult(success=False, error=f"Feed with id {feed_id} not found")
