@@ -13,5 +13,7 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite+aiosqlite:///cyberblade.db"  # here an async database url must be used
 
+    enable_fxtwitter: bool = False
+
 
 settings = Settings()  # type: ignore

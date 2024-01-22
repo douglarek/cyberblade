@@ -93,12 +93,13 @@ async def on_message(message: nextcord.Message):
         return
 
     assert bot.user
-    urls, users = process_twitter_urls(message.content)
-    if not urls:
-        return
-    async with message.channel.typing():
-        await message.add_reaction("💬")
-        await message.channel.send(content=f":bird: [Tweet • {users[0]}]({urls[0]})")
+    if settings.enable_fxtwitter:
+        urls, users = process_twitter_urls(message.content)
+        if not urls:
+            return
+        async with message.channel.typing():
+            await message.add_reaction("💬")
+            await message.channel.send(content=f":bird: [Tweet • {users[0]}]({urls[0]})")
 
 
 @bot.slash_command(description="cyberblade main command")
