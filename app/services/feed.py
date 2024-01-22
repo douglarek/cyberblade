@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Sequence
 
+from opml import OpmlDocument  # type: ignore
 from sqlmodel import select
 
 from app.database import async_session
@@ -32,12 +33,28 @@ async def subscribe_feed(title: str, url: str, channel_id: int) -> FeedResult:
         return FeedResult(success=True, feed=new_feed)
 
 
-async def get_feeds_by_channel(channel_id: int) -> Sequence[Feed]:
+@dataclass
+class FeedsWithOpml:
+    feeds: Sequence[Feed]
+    opml: str
+
+
+async def get_feeds_by_channel(channel_id: int, return_opml=False) -> FeedsWithOpml:
     async with async_session() as session:
         query = select(Feed).where(Feed.channel_id == channel_id)
         result = await session.exec(query)
-        subscriptions = result.all()
-        return subscriptions
+        feeds = result.all()
+        if return_opml:
+            document = OpmlDocument()
+            for feed in feeds:
+                document.add_rss(
+                    feed.title,
+                    feed.url,
+                    version="RSS2",
+                    created=datetime.now(),
+                )
+            return FeedsWithOpml(feeds=feeds, opml=document.dumps(pretty=True))
+        return FeedsWithOpml(feeds=feeds, opml="")
 
 
 async def get_all_channel_ids() -> Sequence[int]:

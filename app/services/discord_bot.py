@@ -1,4 +1,5 @@
 import asyncio
+import io
 import logging
 import re
 from datetime import datetime
@@ -38,7 +39,7 @@ class Bot(commands.Bot):
                     channel = await self.fetch_channel(channel_id)
                     if channel:
                         feeds = await get_feeds_by_channel(channel_id)
-                        for _feed in feeds:
+                        for _feed in feeds.feeds:
                             feed = await parse_feed(_feed.url)
                             if not feed or not feed.version:
                                 # here should delete feed or notify user
@@ -202,11 +203,30 @@ async def list_feed(interaction: nextcord.Interaction):
     """
     await interaction.response.defer(ephemeral=True)
     assert interaction.channel
-    subscriptions = await get_feeds_by_channel(interaction.channel.id)
-    if subscriptions:
+    feeds = await get_feeds_by_channel(interaction.channel.id)
+    if feeds.feeds:
         return await interaction.followup.send(
-            content="\n".join([f"{i}. [{s.title}]({s.url})" for i, s in enumerate(subscriptions, 1)]),
+            content="\n".join([f"{i}. [{s.title}]({s.url})" for i, s in enumerate(feeds.feeds, 1)]),
             delete_after=30,
+        )
+    await interaction.followup.send(content="No feed found", delete_after=10)
+
+
+@feed.subcommand(description="export rss feeds to opml file", name="export")
+async def export_feed(interaction: nextcord.Interaction):
+    """
+    This is a subcommand of the '/cyberblade feed' command.
+    It will appear in the menu as '/cyberblade feed export'.
+    """
+    await interaction.response.defer(ephemeral=True)
+    assert interaction.channel
+    feeds = await get_feeds_by_channel(interaction.channel.id, return_opml=True)
+    if feeds.opml:
+        return await interaction.followup.send(
+            content="Here is your opml file",
+            file=nextcord.File(
+                io.BytesIO(feeds.opml.encode()), filename=f"feeds_{datetime.utcnow().strftime('%Y%m%d%H%M')}.opml"
+            ),
         )
     await interaction.followup.send(content="No feed found", delete_after=10)
 
