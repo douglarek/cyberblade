@@ -130,9 +130,9 @@ async def test_feed(
     """
     await interaction.response.defer(ephemeral=True)
     feed = await http_service.fetch_feed(url)
-    if feed.error:
+    if e := feed.error:
         return await interaction.followup.send(
-            embed=nextcord.Embed(description="Invalid feed url", color=nextcord.Color.red()), delete_after=10
+            embed=nextcord.Embed(description=e, color=nextcord.Color.red()), delete_after=10
         )
     if feed.feed.entries:
         entry = feed.feed.entries[0]
@@ -142,7 +142,7 @@ async def test_feed(
 
 @test_feed.error
 async def info_error(ctx: commands.Context, error: nextcord.ApplicationError):
-    await ctx.send(f"{error}")
+    await ctx.send(f"An error occurred: {error} . :cry:", delete_after=10)
 
 
 @feed.subcommand(description="subscribe a rss feed", name="sub")
@@ -162,7 +162,7 @@ async def sub_feed(
             embed=nextcord.Embed(description=e, color=nextcord.Color.red()), delete_after=10
         )
     assert interaction.channel
-    sr = await subscribe_feed(feed.feed.title, url, interaction.channel.id)
+    sr = await subscribe_feed(feed.feed.feed.title, url, interaction.channel.id)
     if sr.success:
         assert sr.feed
         return await interaction.followup.send(
@@ -241,18 +241,17 @@ if settings.jinrishici_token:
         """
         logger.info("random_poem command called")
         await interaction.response.defer()
-        res = await http_service.jinrishici_sentence()
-        if res["status"] == "success":
-            data = res["data"]["origin"]
+        js = await http_service.jinrishici_sentence()
+        if not js.error:
             embed = nextcord.Embed(
-                title=data["title"],
-                description="\n".join(data["content"]),
+                title=js.title,
+                description=js.content,
                 color=nextcord.Color.green(),
             )
-            embed.set_author(name=data["author"], url="https://zh.wikipedia.org/wiki/" + data["author"])
-            if data["translate"]:
-                embed.add_field(name="译文", value="> " + ("".join(data["translate"])))
-            return await interaction.followup.send(content="📖 "  +res["data"]["content"], embed=embed)
+            embed.set_author(name=js.author, url="https://zh.wikipedia.org/wiki/" + js.author)
+            if js.translate:
+                embed.add_field(name="译文", value="> " + js.translate)
+            return await interaction.followup.send(content="📖 "  +js.sequence, embed=embed)
 
         await interaction.followup.send(
             content="error occurred and this message will be auto deleted in 10 seconds. :cry:",
