@@ -6,7 +6,6 @@ import traceback
 from datetime import datetime
 from time import mktime
 
-import feedparser  # type: ignore
 import nextcord
 from nextcord.ext import application_checks, commands
 
@@ -18,7 +17,7 @@ from app.services.feed import (
     unsubscribe_feed,
     update_last_checked,
 )
-from app.services.poem_api import HTTPService
+from app.services.http_api import HTTPService
 
 logger = logging.getLogger(__name__)
 http_service = HTTPService()
@@ -41,13 +40,13 @@ class Bot(commands.Bot):
                     if channel:
                         feeds = await get_feeds_by_channel(channel_id)
                         for _feed in feeds.feeds:
-                            feed = await parse_feed(_feed.url)
-                            if not feed or not feed.version:
+                            feed = await http_service.fetch_feed(_feed.url)
+                            if feed.error:
                                 # here should delete feed or notify user
                                 logger.error(f"Invalid feed url: {_feed.url}")
                                 continue
-                            if feed.entries:
-                                entry = feed.entries[0]
+                            if e := feed.feed.entries:
+                                entry = e[0]
                                 dt = entry.get("published_parsed") or entry.get("updated_parsed")  # rss, aotm
                                 published = datetime.fromtimestamp(mktime(dt)) if dt else datetime.utcnow()
                                 logger.info(f"checking feed: {_feed.url}, last_updated: {_feed.last_checked}")
@@ -120,12 +119,6 @@ async def feed(interaction: nextcord.Interaction):
     """
 
 
-async def parse_feed(url: str):
-    loop = asyncio.get_event_loop()
-    feed = await loop.run_in_executor(None, feedparser.parse, url)
-    return feed
-
-
 @feed.subcommand(description="test a rss feed", name="test")
 async def test_feed(
     interaction: nextcord.Interaction,
@@ -136,15 +129,20 @@ async def test_feed(
     It will appear in the menu as '/cyberblade feed test'.
     """
     await interaction.response.defer(ephemeral=True)
-    feed = await parse_feed(url)
-    if not feed.version:
+    feed = await http_service.fetch_feed(url)
+    if feed.error:
         return await interaction.followup.send(
             embed=nextcord.Embed(description="Invalid feed url", color=nextcord.Color.red()), delete_after=10
         )
-    if feed.entries:
-        entry = feed.entries[0]
+    if feed.feed.entries:
+        entry = feed.feed.entries[0]
         return await interaction.followup.send(content=f":newspaper2: [{entry.title}]({entry.link})", delete_after=30)
     await interaction.followup.send(content="No entries found", delete_after=10)
+
+
+@test_feed.error
+async def info_error(ctx: commands.Context, error: nextcord.ApplicationError):
+    await ctx.send(f"{error}")
 
 
 @feed.subcommand(description="subscribe a rss feed", name="sub")
@@ -158,10 +156,10 @@ async def sub_feed(
     It will appear in the menu as '/cyberblade feed sub'.
     """
     await interaction.response.defer(ephemeral=True)
-    feed = await parse_feed(url)
-    if not feed.version:
+    feed = await http_service.fetch_feed(url)
+    if e := feed.error:
         return await interaction.followup.send(
-            embed=nextcord.Embed(description="Invalid feed url", color=nextcord.Color.red()), delete_after=10
+            embed=nextcord.Embed(description=e, color=nextcord.Color.red()), delete_after=10
         )
     assert interaction.channel
     sr = await subscribe_feed(feed.feed.title, url, interaction.channel.id)

@@ -1,14 +1,27 @@
+from typing import Any
+
 import aiohttp
+import feedparser  # type: ignore
+from attr import dataclass
 
 from app.config.settings import settings
 
 
+@dataclass
+class FetchFeedResponse:
+    feed: Any = {}
+    error: str = ""
+
+
 class HTTPService:
     _conn = aiohttp.TCPConnector()
-    session = aiohttp.ClientSession(connector=_conn)
+    session = aiohttp.ClientSession(connector=_conn, timeout=aiohttp.ClientTimeout(total=10))
 
     async def jinrishici_sentence(self):
-        headers = {"X-User-Token": settings.jinrishici_token}
+        headers = {
+            "X-User-Token": settings.jinrishici_token,
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        }
         async with self.session.get(settings.jinrishici_api_endpoint + "/sentence", headers=headers) as resp:
             if resp.status == 200:
                 # {
@@ -44,3 +57,13 @@ class HTTPService:
             return {
                 "status": f"HTTP {resp.status} {resp.reason}",
             }
+
+    async def fetch_feed(self, url: str) -> FetchFeedResponse:
+        async with self.session.get(url) as resp:
+            if resp.status == 200:
+                text = await resp.text()
+                feed = feedparser.parse(text)
+                if not feed or feed.get("version"):
+                    return FetchFeedResponse(feed=feed)
+                return FetchFeedResponse(error="Not a valid feed")
+            return FetchFeedResponse(error=f"HTTP {resp.status} {resp.reason}")
