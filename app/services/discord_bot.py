@@ -52,7 +52,9 @@ class Bot(commands.Bot):
                                 logger.info(f"checking feed: {_feed.url}, last_updated: {_feed.last_checked}")
                                 if (not _feed.last_checked) or published > _feed.last_checked:
                                     logger.info(f"New entry found in: {_feed.url}, last_checked: {_feed.last_checked}")
-                                    await channel.send(content=f":newspaper2: [{entry.title}]({entry.link})")
+                                    await channel.send(
+                                        content=f":newspaper2: [{entry.title}]({entry.link}) from **{_feed.title}**"
+                                    )
                                     res = await update_last_checked(_feed.id)
                                     logger.info(f"update last_checked: {res}")
             except Exception as e:  # handle all exceptions here to avoid task hang
