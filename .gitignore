@@ -162,4 +162,4 @@ cython_debug/
 .envrc
 
 # custom
-cyberblade.db
+dominus.db

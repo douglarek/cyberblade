@@ -106,15 +106,15 @@ async def on_message(message: nextcord.Message):
             await message.channel.send(content=f":bird: [Tweet • {users[0]}]({urls[0]})")
 
 
-@bot.slash_command(description="cyberblade main command")
-async def cyberblade(interaction: nextcord.Interaction):
+@bot.slash_command(description="dominus main command")
+async def dominus(interaction: nextcord.Interaction):
     """
     This is the main slash command that will be the prefix of all commands below.
     This will never get called since it has subcommands.
     """
 
 
-@cyberblade.subcommand(description="feed subcommand")
+@dominus.subcommand(description="feed subcommand")
 async def feed(interaction: nextcord.Interaction):
     """
     This is the second slash command that will be the prefix of all commands below.
@@ -128,8 +128,8 @@ async def test_feed(
     url: str = nextcord.SlashOption(description="a rss feed url", required=True),
 ):
     """
-    This is a subcommand of the '/cyberblade feed' command.
-    It will appear in the menu as '/cyberblade feed test'.
+    This is a subcommand of the '/dominus feed' command.
+    It will appear in the menu as '/dominus feed test'.
     """
     await interaction.response.defer(ephemeral=True)
     feed = await http_service.fetch_feed(url)
@@ -155,8 +155,8 @@ async def sub_feed(
     url: str = nextcord.SlashOption(description="a rss feed url", required=True),
 ):
     """
-    This is a subcommand of the '/cyberblade feed' command.
-    It will appear in the menu as '/cyberblade feed sub'.
+    This is a subcommand of the '/dominus feed' command.
+    It will appear in the menu as '/dominus feed sub'.
     """
     await interaction.response.defer(ephemeral=True)
     feed = await http_service.fetch_feed(url)
@@ -182,8 +182,8 @@ async def unsub_feed(
     url: str = nextcord.SlashOption(description="a rss feed url", required=True),
 ):
     """
-    This is a subcommand of the '/cyberblade feed' command.
-    It will appear in the menu as '/cyberblade feed ubsub'.
+    This is a subcommand of the '/dominus feed' command.
+    It will appear in the menu as '/dominus feed ubsub'.
     """
     await interaction.response.defer(ephemeral=True)
     assert interaction.channel
@@ -200,8 +200,8 @@ async def unsub_feed(
 @feed.subcommand(description="list rss feeds", name="list")
 async def list_feed(interaction: nextcord.Interaction):
     """
-    This is a subcommand of the '/cyberblade feed' command.
-    It will appear in the menu as '/cyberblade feed list'.
+    This is a subcommand of the '/dominus feed' command.
+    It will appear in the menu as '/dominus feed list'.
     """
     await interaction.response.defer(ephemeral=True)
     assert interaction.channel
@@ -217,8 +217,8 @@ async def list_feed(interaction: nextcord.Interaction):
 @feed.subcommand(description="export rss feeds to opml file", name="export")
 async def export_feed(interaction: nextcord.Interaction):
     """
-    This is a subcommand of the '/cyberblade feed' command.
-    It will appear in the menu as '/cyberblade feed export'.
+    This is a subcommand of the '/dominus feed' command.
+    It will appear in the menu as '/dominus feed export'.
     """
     await interaction.response.defer(ephemeral=True)
     assert interaction.channel
@@ -236,11 +236,11 @@ async def export_feed(interaction: nextcord.Interaction):
 if settings.jinrishici_token:
     logger.info("random_poem command enabled")
 
-    @cyberblade.subcommand(description="random a poem", name="poem")
+    @dominus.subcommand(description="random a poem", name="poem")
     async def random_poem(interaction: nextcord.Interaction):
         """
-        This is a subcommand of the '/cyberblade' slash command.
-        It will appear in the menu as '/cyberblade random_poem'.
+        This is a subcommand of the '/dominus' slash command.
+        It will appear in the menu as '/dominus random_poem'.
         """
         logger.info("random_poem command called")
         await interaction.response.defer()
@@ -263,13 +263,13 @@ if settings.jinrishici_token:
         )
 
 
-@cyberblade.subcommand(description="use google search")
+@dominus.subcommand(description="use google search")
 async def google(
     interaction: nextcord.Interaction, query: str = nextcord.SlashOption(description="search query", required=True)
 ):
     """
-    This is a subcommand of the '/cyberblade' slash command.
-    It will appear in the menu as '/cyberblade google'.
+    This is a subcommand of the '/dominus' slash command.
+    It will appear in the menu as '/dominus google'.
     """
     await interaction.response.defer()
     url = f"https://www.google.com/search?q={urllib.parse.quote(query)}"

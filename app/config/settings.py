@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     jinrishici_token: Optional[str] = None
     jinrishici_api_endpoint: str = "https://v2.jinrishici.com"
 
-    database_url: str = "sqlite+aiosqlite:///cyberblade.db"  # here an async database url must be used
+    database_url: str = "sqlite+aiosqlite:///dominus.db"  # here an async database url must be used
 
     enable_fxtwitter: bool = False
 
