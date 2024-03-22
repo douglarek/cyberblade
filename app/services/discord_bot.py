@@ -3,6 +3,7 @@ import io
 import logging
 import re
 import traceback
+import urllib.parse
 from datetime import datetime
 from time import mktime
 
@@ -271,7 +272,8 @@ async def google(
     It will appear in the menu as '/cyberblade google'.
     """
     await interaction.response.defer()
-    await interaction.followup.send(content=f"https://www.google.com/search?q={query}")
+    url = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
+    await interaction.followup.send(content=f"🔍 [Google Search]({url})")
 
 
 def start():
