@@ -235,7 +235,7 @@ async def export_feed(interaction: nextcord.Interaction):
 if settings.jinrishici_token:
     logger.info("random_poem command enabled")
 
-    @cyberblade.subcommand(description="random a poem")
+    @cyberblade.subcommand(description="random a poem", name="poem")
     async def random_poem(interaction: nextcord.Interaction):
         """
         This is a subcommand of the '/cyberblade' slash command.
@@ -253,13 +253,25 @@ if settings.jinrishici_token:
             embed.set_author(name=js.author, url="https://zh.wikipedia.org/wiki/" + js.author)
             if js.translate:
                 embed.add_field(name="译文", value="> " + js.translate)
-            return await interaction.followup.send(content="📖 "  +js.sequence, embed=embed)
+            return await interaction.followup.send(content="📖 " + js.sequence, embed=embed)
 
         await interaction.followup.send(
             content="error occurred and this message will be auto deleted in 10 seconds. :cry:",
             ephemeral=True,
             delete_after=10,
         )
+
+
+@cyberblade.subcommand(description="use google search")
+async def google(
+    interaction: nextcord.Interaction, query: str = nextcord.SlashOption(description="search query", required=True)
+):
+    """
+    This is a subcommand of the '/cyberblade' slash command.
+    It will appear in the menu as '/cyberblade google'.
+    """
+    await interaction.response.defer()
+    await interaction.followup.send(content=f"https://www.google.com/search?q={query}")
 
 
 def start():
